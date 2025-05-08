@@ -9,8 +9,9 @@ import datetime
 from datetime import date
 from operator import itemgetter, attrgetter
 
-ROOT_PATH = os.getcwd()
+ROOT_PATH = os.getcwd()+"/ktp_module/"
 # IMAGE_PATH = os.path.join(ROOT_PATH, 'Kywa.jpg')
+MODULE2_PATH = os.path.join(ROOT_PATH, 'data/module2.png')
 LINE_REC_PATH = os.path.join(ROOT_PATH, 'data/ID_CARD_KEYWORDS.csv')
 CITIES_REC_PATH = os.path.join(ROOT_PATH, 'data/CITIES.csv')
 RELIGION_REC_PATH = os.path.join(ROOT_PATH, 'data/RELIGIONS.csv')
@@ -77,13 +78,35 @@ def ocr_raw(image):
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-    img_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    # img_gray = cv2.equalizeHist(img_gray)
-    # img_gray = cv2.fastNlMeansDenoising(img_gray, None, 3, 7, 21)
-    id_number = return_id_number(image, img_gray)
+    img_for_nik = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    #img_gray = cv2.equalizeHist(img_gray)
+    #img_gray = cv2.fastNlMeansDenoising(img_gray, None, 3, 7, 21)
+    id_number = return_id_number(image, img_for_nik)
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # 2. Resize the image to improve OCR accuracy
+    height, width = gray.shape
+    scale_factor = 2  # Increase the size by 2x
+    gray = cv2.resize(gray, (width * scale_factor, height * scale_factor), interpolation=cv2.INTER_LINEAR)
+
+    # 3. Apply Gaussian blur to reduce noise
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # 4. Apply adaptive thresholding for better contrast
+    thresh = cv2.adaptiveThreshold(
+        blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+
+    # 5. (Optional) Perform morphological operations to clean up noise
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    cleaned = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+
+    img_gray=img_for_nik
     cv2.fillPoly(img_gray, pts=[np.asarray([(540, 150), (540, 499), (798, 499), (798, 150)])], color=(255, 255, 255))
     th, threshed = cv2.threshold(img_gray, 127, 255, cv2.THRESH_TRUNC)
     result_raw = pytesseract.image_to_string(threshed, lang="ind")
+    print(f"\n\nOCR:\n{result_raw}\n\n")
 
     return result_raw, id_number
 
@@ -157,7 +180,7 @@ def return_id_number(image, img_gray):
         print(e)
 
     if check_nik == True:
-        img_mod = cv2.imread("data/module2.png")
+        img_mod = cv2.imread(MODULE2_PATH)
 
         ref = cv2.cvtColor(img_mod, cv2.COLOR_BGR2GRAY)
         ref = cv2.threshold(ref, 66, 255, cv2.THRESH_BINARY_INV)[1]
@@ -289,6 +312,7 @@ def main(image):
         if 'Nama' in tmp_data:
             nama = ' '.join(tmp_data[2:])
             nama = re.sub('[^A-Z. ]', '', nama)
+            
 
             if len(nama.split()) == 1:
                 nama = re.sub('[^A-Z.]', '', nama)
