@@ -4,7 +4,7 @@ import numpy as np
 import ocr
 import time
 # Note: Uncomment for YOLO feature
-import yolo_detect
+#import yolo_detect
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -26,7 +26,7 @@ def upload_file():
         image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
         # Note: Uncomment for YOLO feature
-        image = yolo_detect.main(image)
+        #image = yolo_detect.main(image)
         nik, nama, tempat_lahir, tgl_lahir = ocr.main(image)
 
         finish_time = time.time() - start_time

@@ -83,7 +83,8 @@ def ocr_raw(image):
     #img_gray = cv2.fastNlMeansDenoising(img_gray, None, 3, 7, 21)
     id_number = return_id_number(image, img_for_nik)
 
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # 2. Resize the image to improve OCR accuracy
     height, width = gray.shape
@@ -105,7 +106,8 @@ def ocr_raw(image):
     img_gray=img_for_nik
     cv2.fillPoly(img_gray, pts=[np.asarray([(540, 150), (540, 499), (798, 499), (798, 150)])], color=(255, 255, 255))
     th, threshed = cv2.threshold(img_gray, 127, 255, cv2.THRESH_TRUNC)
-    result_raw = pytesseract.image_to_string(threshed, lang="ind")
+    #result_raw = pytesseract.image_to_string(threshed, lang="ind")
+    result_raw = pytesseract.image_to_string(img_gray, lang="ind")
     print(f"\n\nOCR:\n{result_raw}\n\n")
 
     return result_raw, id_number
